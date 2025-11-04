@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escape del Laberinto de Luz</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        #game {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-template-rows: repeat(10, 40px);
+            gap: 2px;
+            position: relative;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background-color: #111;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .wall {
+            background-color: #444;
+        }
+
+        .player {
+            background-color: #00ffcc;
+            box-shadow: 0 0 20px #00ffcc;
+        }
+
+        .exit {
+            background-color: #ffcc00;
+        }
+
+        #overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), transparent 80px, rgba(0,0,0,0.95) 160px);
+            pointer-events: none;
+            transition: 0.05s;
+        }
+
+        #message {
+            margin-top: 15px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <h1> Escape del Laberinto de Luz</h1>
+    <div id="game"></div>
+    <div id="overlay"></div>
+    <div id="message">Usa las flechas para moverte</div>
+
+      <script>
+        // Tamaño del tablero
+        const rows = 10;
+        const cols = 10;
+
+        // Mapa del laberinto: 0 = camino, 1 = pared, 2 = salida
+        const map = [
+            [0,1,1,1,1,1,1,1,1,1],
+            [0,0,0,0,0,1,0,0,0,1],
+            [1,0,1,1,0,1,0,1,0,1],
+            [1,0,1,0,0,0,0,1,0,1],
+            [1,0,1,0,1,1,0,0,0,1],
+            [1,0,0,0,0,1,1,1,0,1],
+            [1,1,1,1,0,0,0,1,0,0],
+            [1,0,0,1,1,1,0,1,1,0],
+            [1,0,0,0,0,0,0,0,0,2], // salida (2)
+            [1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        const game = document.getElementById('game');
+        const overlay = document.getElementById('overlay');
+        const message = document.getElementById('message');
+
+        // Crear celdas del juego
+        let cells = [];
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                if (map[r][c] === 1) cell.classList.add('wall');
+                if (map[r][c] === 2) cell.classList.add('exit');
+                game.appendChild(cell);
+                cells.push(cell);
+            }
+        }
+
+        // Posición inicial del jugador
+        let player = { row: 0, col: 0 };
+        drawPlayer();
+
+        // Función para dibujar jugador
+        function drawPlayer() {
+            cells.forEach(c => c.classList.remove('player'));
+            const index = player.row * cols + player.col;
+            cells[index].classList.add('player');
+            updateLight();
+        }
+
+        // Actualizar luz (efecto de linterna)
+        function updateLight() {
+            const rect = game.getBoundingClientRect();
+            const x = (player.col * 42) + 20; // posición horizontal
+            const y = (player.row * 42) + 20; // posición vertical
+            overlay.style.setProperty('--x', `${x}px`);
+            overlay.style.setProperty('--y', `${y}px`);
+        }
+
+        // Movimiento
+        document.addEventListener('keydown', (e) => {
+            let newRow = player.row;
+            let newCol = player.col;
+
+            if (e.key === 'ArrowUp') newRow--;
+            if (e.key === 'ArrowDown') newRow++;
+            if (e.key === 'ArrowLeft') newCol--;
+            if (e.key === 'ArrowRight') newCol++;
+
+            // Verificar límites y paredes
+            if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols && map[newRow][newCol] !== 1) {
+                player = { row: newRow, col: newCol };
+                drawPlayer();
+
+                // Si llega a la salida
+                if (map[newRow][newCol] === 2) {
+                    message.textContent = "¡Escapaste del laberinto!";
+                    overlay.style.background = "rgba(0, 0, 0, 0.5)";
+                    document.removeEventListener('keydown', arguments.callee);
+                }
+            }
+        });
+    </script>
+</body>
